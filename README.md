@@ -7,13 +7,19 @@ recorded in `results/measurements.md`.
 ## Setup
 
 ```bash
+git clone https://github.com/KhalidAbdelaty/claude-opus-5-api-tutorial.git
+cd claude-opus-5-api-tutorial
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+cp .env.example .env        # then put your key in it
 ```
 
 Tested on Python 3.11 with `anthropic==0.120.0` on July 26, 2026.
+
+`sample_repo/` ships as plain files and gets its own git history the first time you
+run anything, so the reset between benchmark runs stays scoped to it and never
+touches this repository.
 
 ## Layout
 
