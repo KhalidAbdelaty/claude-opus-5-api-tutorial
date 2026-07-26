@@ -1,0 +1,12 @@
+# Secrets. Never commit the real key.
+.env
+
+# The sample repository gets its own git history on first run. Keep that
+# history out of this repository so the files stay tracked as plain files.
+sample_repo/.git/
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
