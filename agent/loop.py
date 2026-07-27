@@ -14,6 +14,9 @@ from agent.schemas import RepairReport
 
 REPEAT_LIMIT = 3
 
+# Sentinel so an unset thinking config is simply left out of the request.
+NOT_SET = object()
+
 
 @dataclass
 class ToolCall:
@@ -66,9 +69,14 @@ def run_agent(
     max_tokens: int = MAX_TOKENS,
     max_iterations: int = MAX_ITERATIONS,
     tools: list[dict] | None = None,
+    show_thinking: bool = False,
     on_event=None,
 ) -> RunResult:
-    """Drive Claude Opus 5 through one bug-fixing attempt."""
+    """Drive Claude Opus 5 through one bug-fixing attempt.
+
+    Set show_thinking to stream the model's reasoning summary. It is billed the
+    same either way, so the only cost is a little latency.
+    """
     tools = tools if tools is not None else tool_module.TOOLS
     result = RunResult(effort=effort, usage=Usage())
     messages = [{"role": "user", "content": build_task_prompt(bug_report)}]
@@ -76,33 +84,56 @@ def run_agent(
     response = None
     started = time.perf_counter()
 
-    def emit(kind: str, detail: str) -> None:
+    thinking = {"type": "adaptive", "display": "summarized"} if show_thinking else NOT_SET
+
+    def emit(kind: str, detail) -> None:
         if on_event is not None:
             on_event(kind, detail)
 
     for iteration in range(1, max_iterations + 1):
         result.iterations = iteration
+        emit("turn_start", {"turn": iteration})
+
+        request = {
+            "model": MODEL,
+            "max_tokens": max_tokens,
+            "system": SYSTEM_PROMPT,
+            "tools": tools,
+            "output_config": {"effort": effort},
+            "output_format": RepairReport,
+            "cache_control": {"type": "ephemeral"},
+            "messages": messages,
+        }
+        if thinking is not NOT_SET:
+            request["thinking"] = thinking
 
         # max_tokens sits above 21,333, so the SDK requires a streamed request.
-        with client.messages.stream(
-            model=MODEL,
-            max_tokens=max_tokens,
-            system=SYSTEM_PROMPT,
-            tools=tools,
-            output_config={"effort": effort},
-            output_format=RepairReport,
-            cache_control={"type": "ephemeral"},
-            messages=messages,
-        ) as stream:
+        with client.messages.stream(**request) as stream:
             for event in stream:
                 if result.seconds_to_first_output is None and _is_visible(event):
                     result.seconds_to_first_output = time.perf_counter() - started
-                if event.type == "content_block_start" and event.content_block.type == "tool_use":
-                    emit("tool_start", event.content_block.name)
+
+                if event.type == "content_block_start":
+                    block = event.content_block
+                    if block.type == "tool_use":
+                        emit("tool_start", block.name)
+                    elif block.type == "thinking":
+                        emit("thinking_start", {})
+                elif event.type == "content_block_delta":
+                    delta = event.delta
+                    if delta.type == "thinking_delta":
+                        emit("thinking_delta", delta.thinking)
+                    elif delta.type == "text_delta":
+                        emit("text_delta", delta.text)
+                    elif delta.type == "input_json_delta":
+                        emit("tool_args_delta", delta.partial_json)
+
             response = stream.get_final_message()
 
         result.usage.add(response.usage)
         result.stop_reason = response.stop_reason
+        emit("turn_end", {"turn": iteration, "usage": result.usage,
+                          "stop_reason": response.stop_reason})
 
         # Thinking and redacted_thinking blocks have to go back unmodified, so
         # append the whole content list rather than a filtered subset.

@@ -41,13 +41,23 @@ touches this repository.
 streamlit run app_streamlit.py
 ```
 
-Pick an effort level, run the agent against the sample bug, and watch the tool calls
-arrive live. Each run resets the repository first and appends a row to a comparison
-table, so you build the effort tradeoff from your own measurements. A `low` run costs
-about four cents.
+Pick an effort level and run the agent against the sample bug. The panel streams the
+model's reasoning as it arrives, stacks each tool call underneath it, and ticks the
+token count, cost and elapsed time as every turn closes. A `low` run takes about 21
+seconds and costs roughly four cents; `xhigh` takes about 35.
 
-The app surfaces what the article argues: the model's own report sits in one tab, and
-what the application verified by rerunning pytest sits in another.
+Two details worth knowing:
+
+- Reasoning is streamed with `thinking: {"type": "adaptive", "display": "summarized"}`.
+  The API bills that identically to the default `"omitted"`, so showing the reasoning
+  costs nothing beyond a little latency.
+- The feed keeps only the three most recent turns on screen. The panel is a fixed
+  height, and an unwindowed feed pushes the live reasoning out of view mid-run.
+
+Each run resets the repository first and appends a row to a comparison table, so the
+effort tradeoff you end up looking at is one you measured. The split the article argues
+for is built into the UI: the Report tab is what the model claimed, and the third tab is
+what the app confirmed by rerunning pytest and reading `git diff`.
 
 ## Running it from the terminal
 
