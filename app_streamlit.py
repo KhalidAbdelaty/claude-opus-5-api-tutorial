@@ -56,11 +56,28 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spectral:wght@500;600;700&display=swap');
 :root{--bg:#FAF9F5;--paper:#F0EEE6;--coral:#D97757;--coral-dark:#BE5D3B;--ink:#1F1E1D;
 --muted:#73706B;--border:#E7E4DA;--green:#1F8A4C;--red:#B3402F;--violet:#6B5B95;}
-.stApp{background:var(--bg);}
-html,body,[class*="css"],.stMarkdown,p,li,label{font-family:'Inter',sans-serif;color:var(--ink);}
+.stApp{background:var(--bg);color:var(--ink);}
+html,body,[class*="css"],.stMarkdown,p,li,label,span,div{font-family:'Inter',sans-serif;}
+.stMarkdown,p,li,label{color:var(--ink);}
 h1,h2,h3,h4{font-family:'Spectral',Georgia,serif;color:var(--ink);letter-spacing:-.015em;}
 #MainMenu,footer,header{visibility:hidden;}
 .block-container{padding-top:1.6rem;max-width:1320px;}
+
+/* Every surface below is a hardcoded light one, so state the ink colour
+   explicitly rather than inheriting whatever theme the browser asked for. */
+.stTextArea textarea,.stTextInput input,.stNumberInput input{
+  color:var(--ink)!important;background:#fff!important;-webkit-text-fill-color:var(--ink)!important;}
+.stTextArea textarea::placeholder{color:var(--muted)!important;-webkit-text-fill-color:var(--muted)!important;}
+[data-testid="stWidgetLabel"] p,[data-testid="stWidgetLabel"] label,
+[data-testid="stCaptionContainer"],[data-testid="stCaptionContainer"] p{color:var(--muted)!important;}
+[data-testid="stMetricLabel"],[data-testid="stMetricLabel"] p{color:var(--muted)!important;}
+[data-testid="stDataFrame"],[data-testid="stDataFrame"] *{color:var(--ink)!important;}
+.stTabs [data-baseweb="tab"] p{color:var(--muted)!important;}
+.stTabs [aria-selected="true"] p{color:var(--coral-dark)!important;}
+code,pre,.stCode,.stCode *{color:var(--ink)!important;}
+[data-testid="stExpander"] p,[data-testid="stExpander"] summary{color:var(--ink)!important;}
+[data-testid="stSidebar"] *{color:var(--ink);}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"]{color:var(--muted)!important;}
 
 .hero h1{font-size:2.5rem;margin:.1rem 0 .2rem 0;}
 .hero p{color:var(--muted);font-size:1.04rem;margin:0;}
@@ -68,7 +85,7 @@ h1,h2,h3,h4{font-family:'Spectral',Georgia,serif;color:var(--ink);letter-spacing
 border:1px solid rgba(217,119,87,.30);padding:3px 13px;border-radius:999px;
 font-size:.79rem;font-weight:600;letter-spacing:.02em;}
 
-[data-testid="stSidebar"]{background:var(--paper);border-right:1px solid var(--border);}
+[data-testid="stSidebar"]{background:var(--paper);border-right:1px solid var(--border);color:var(--ink);}
 [data-testid="stSidebar"] h3{font-size:1rem;margin:.1rem 0;}
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.5rem;}
 .logo-link{display:block;margin-bottom:2px;}
@@ -77,29 +94,32 @@ font-size:.79rem;font-weight:600;letter-spacing:.02em;}
 .logo-sub{color:var(--muted);font-size:.78rem;margin:2px 0 6px 2px;}
 
 [data-testid="stVerticalBlockBorderWrapper"]{background:#fff;border:1px solid var(--border)!important;
-border-radius:16px;box-shadow:0 1px 3px rgba(31,30,29,.05);}
+border-radius:16px;box-shadow:0 1px 3px rgba(31,30,29,.05);color:var(--ink);}
 .stButton>button{background:#fff;color:var(--ink);border:1px solid var(--border);border-radius:11px;
 padding:.6rem 1.1rem;font-weight:600;transition:all .15s ease;}
 .stButton>button:hover{border-color:var(--coral);color:var(--coral-dark);transform:translateY(-1px);}
 .stButton>button[kind="primary"]{background:var(--coral);color:#fff;border:none;}
 .stButton>button[kind="primary"]:hover{background:var(--coral-dark);}
-.stTextArea textarea{border-radius:12px;border:1px solid var(--border);background:#fff;font-size:.97rem;}
-[data-testid="stMetric"]{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 14px;}
-[data-testid="stMetricValue"]{font-family:'Spectral',serif;color:var(--coral-dark);font-size:1.55rem;}
-.stTabs [aria-selected="true"]{color:var(--coral-dark);}
+.stTextArea textarea{border-radius:12px;border:1px solid var(--border);font-size:.97rem;}
+.stTextArea textarea:focus{border-color:var(--coral);box-shadow:0 0 0 2px rgba(217,119,87,.18);}
+[data-testid="stMetric"]{background:#fff;border:1px solid var(--border);border-radius:14px;
+padding:10px 14px;color:var(--ink);}
+[data-testid="stMetricValue"]{font-family:'Spectral',serif;color:var(--coral-dark)!important;font-size:1.55rem;}
+[data-testid="stMetricValue"] div{color:var(--coral-dark)!important;}
 
 .label{font-weight:600;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;}
 .pill{display:inline-block;background:var(--paper);border:1px solid var(--border);border-radius:8px;
-padding:3px 9px;margin:2px 4px 2px 0;font-size:.84rem;
+padding:3px 9px;margin:2px 4px 2px 0;font-size:.84rem;color:var(--ink);
 font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 .hint{background:#fff;border:1px dashed var(--border);border-radius:14px;padding:16px 18px;color:var(--muted);}
-.summary{background:rgba(217,119,87,.08);border-left:3px solid var(--coral);
+.hint b{color:var(--ink);}
+.summary{background:rgba(217,119,87,.08);border-left:3px solid var(--coral);color:var(--ink);
 padding:13px 17px;border-radius:10px;font-size:1.01rem;}
 .pass{color:var(--green);font-weight:700;} .fail{color:var(--red);font-weight:700;}
 
 /* Live feed */
 .feed{background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px 4px;
-max-height:430px;overflow-y:auto;}
+max-height:430px;overflow-y:auto;color:var(--ink);}
 .turn{border-left:3px solid var(--border);margin:8px 10px;padding:2px 0 2px 12px;}
 .turn-h{font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;
 letter-spacing:.07em;margin-bottom:4px;}
@@ -108,7 +128,7 @@ border-left:2px solid rgba(107,91,149,.28);padding-left:10px;margin:4px 0 6px 0;
 .think-tag{font-size:.7rem;font-weight:700;letter-spacing:.07em;color:var(--violet);
 text-transform:uppercase;display:block;margin-bottom:2px;}
 .tool{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86rem;
-background:var(--paper);border:1px solid var(--border);border-radius:8px;
+background:var(--paper);border:1px solid var(--border);border-radius:8px;color:var(--ink);
 padding:4px 9px;margin:3px 0;display:inline-block;}
 .tool-ok{border-left:3px solid var(--green);}
 .tool-err{border-left:3px solid var(--red);}
