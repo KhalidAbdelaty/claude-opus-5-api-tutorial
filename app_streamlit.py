@@ -107,12 +107,11 @@ code,pre,.stCode,.stCode *{color:var(--ink)!important;}
 border:1px solid rgba(217,119,87,.30);padding:3px 13px;border-radius:999px;
 font-size:.79rem;font-weight:600;letter-spacing:.02em;}
 
-/* Brand row in the main column, so the logo survives a collapsed sidebar. */
-.brand,.brand:hover,.brand:visited{display:inline-flex;align-items:center;gap:9px;
+/* Brand mark in the main column, so it survives a collapsed sidebar. The full
+   wordmark already sits in the sidebar, so only the mark is needed here. */
+.brand,.brand:hover,.brand:visited{display:inline-flex;align-items:center;
 margin:0 0 12px 0;text-decoration:none!important;border-bottom:none!important;}
-.brand img{height:28px;width:auto;display:block;}
-.brand .word{font-family:'Inter',sans-serif;font-weight:700;font-size:1.2rem;
-color:#05192D!important;letter-spacing:-.025em;text-decoration:none!important;}
+.brand img{height:34px;width:auto;display:block;}
 .brand:hover{opacity:.8;}
 
 [data-testid="stSidebar"]{background:var(--paper);border-right:1px solid var(--border);color:var(--ink);}
@@ -220,8 +219,8 @@ with st.sidebar:
 brand = ""
 if Path(MARK).exists():
     brand = (f'<a class="brand" href="https://www.datacamp.com/blog" target="_blank" '
-             f'rel="noopener"><img src="{svg_uri(MARK)}" alt="DataCamp"/>'
-             f'<span class="word">datacamp</span></a>')
+             f'rel="noopener" title="DataCamp">'
+             f'<img src="{svg_uri(MARK)}" alt="DataCamp"/></a>')
 
 st.markdown(
     f'{brand}<div class="hero"><span class="chip">🔧 Powered by Claude Opus 5</span>'
