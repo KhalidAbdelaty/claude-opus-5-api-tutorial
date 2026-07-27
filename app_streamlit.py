@@ -76,13 +76,18 @@ html,body,[class*="css"],.stMarkdown,p,li,label,span,div{font-family:'Inter',san
 .stMarkdown,p,li,label{color:var(--ink);}
 h1,h2,h3,h4{font-family:'Spectral',Georgia,serif;color:var(--ink);letter-spacing:-.015em;}
 
-/* Hide the menu and toolbar only. The header itself has to keep its box,
-   because Streamlit puts the sidebar expand control inside it: collapse the
-   header and a closed sidebar can never be reopened. */
+/* Hide the chrome, but the sidebar expand button lives inside the toolbar, so
+   hiding the toolbar outright leaves a closed sidebar with no way back.
+   visibility is reversible on a child, unlike display, so the button comes back. */
 #MainMenu,footer,[data-testid="stAppToolbar"],[data-testid="stToolbar"]{visibility:hidden;}
 [data-testid="stHeader"]{background:transparent;}
-[data-testid="stSidebarCollapseButton"] svg,
-[data-testid="stSidebarCollapseButton"] button{color:var(--coral-dark)!important;}
+[data-testid="stExpandSidebarButton"],
+[data-testid="stExpandSidebarButton"] *{visibility:visible!important;}
+[data-testid="stExpandSidebarButton"]{background:#fff;border:1px solid var(--border);
+border-radius:10px;box-shadow:0 1px 3px rgba(31,30,29,.08);}
+[data-testid="stExpandSidebarButton"]:hover{border-color:var(--coral);}
+[data-testid="stExpandSidebarButton"] span{color:var(--coral-dark)!important;}
+[data-testid="stSidebarCollapseButton"] span{color:var(--muted)!important;}
 .block-container{padding-top:1rem;max-width:1320px;}
 
 /* Every surface below is a hardcoded light one, so state the ink colour
@@ -107,10 +112,14 @@ code,pre,.stCode,.stCode *{color:var(--ink)!important;}
 border:1px solid rgba(217,119,87,.30);padding:3px 13px;border-radius:999px;
 font-size:.79rem;font-weight:600;letter-spacing:.02em;}
 
-/* Brand mark in the main column, so it survives a collapsed sidebar. The full
-   wordmark already sits in the sidebar, so only the mark is needed here. */
-.brand,.brand:hover,.brand:visited{display:inline-flex;align-items:center;
-margin:0 0 12px 0;text-decoration:none!important;border-bottom:none!important;}
+/* The sidebar already carries the wordmark, so the mark in the main column is
+   redundant while the sidebar is open. Show it only once the sidebar is
+   collapsed, which is when the branding would otherwise disappear. */
+.brand{display:none;}
+[data-testid="stSidebar"][aria-expanded="false"] ~ div .brand,
+[data-testid="stSidebar"][aria-expanded="false"] ~ section .brand{
+  display:flex;align-items:center;width:max-content;margin:0 0 12px 0;
+  text-decoration:none!important;border-bottom:none!important;}
 .brand img{height:34px;width:auto;display:block;}
 .brand:hover{opacity:.8;}
 
@@ -223,7 +232,7 @@ if Path(MARK).exists():
              f'<img src="{svg_uri(MARK)}" alt="DataCamp"/></a>')
 
 st.markdown(
-    f'{brand}<div class="hero"><span class="chip">🔧 Powered by Claude Opus 5</span>'
+    f'<div class="hero">{brand}<span class="chip">🔧 Powered by Claude Opus 5</span>'
     '<h1>Effort Dial</h1><p>Watch the agent reason, patch a real bug, and bill you for it.</p></div>',
     unsafe_allow_html=True,
 )
