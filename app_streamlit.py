@@ -13,6 +13,7 @@ Run with:  streamlit run app_streamlit.py
 
 import base64
 import html
+import re
 import time
 from pathlib import Path
 
@@ -45,6 +46,14 @@ def logo_uri(path: str) -> str:
 
 
 @st.cache_data
+def logo_mark(path: str) -> str:
+    """Inline the SVG mark so it inherits page styling and needs no extra request."""
+    svg = Path(path).read_text(encoding="utf-8")
+    svg = re.sub(r"<metadata>.*?</metadata>", "", svg, flags=re.S)
+    return re.sub(r"<\?xml.*?\?>", "", svg, flags=re.S).strip()
+
+
+@st.cache_data
 def default_bug() -> str:
     return (PROJECT_ROOT / "bug_report.md").read_text(encoding="utf-8").strip()
 
@@ -60,7 +69,16 @@ CSS = """
 html,body,[class*="css"],.stMarkdown,p,li,label,span,div{font-family:'Inter',sans-serif;}
 .stMarkdown,p,li,label{color:var(--ink);}
 h1,h2,h3,h4{font-family:'Spectral',Georgia,serif;color:var(--ink);letter-spacing:-.015em;}
-#MainMenu,footer,header{visibility:hidden;}
+
+/* Hide the chrome but never the sidebar control. Hiding the whole header
+   takes the expand arrow with it, and a collapsed sidebar then has no way back. */
+#MainMenu,footer,[data-testid="stToolbar"],[data-testid="stDecoration"]{visibility:hidden;}
+[data-testid="stHeader"]{background:transparent;height:0;}
+[data-testid="stSidebarCollapsedControl"],[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"]{visibility:visible!important;display:flex!important;
+z-index:999;top:.55rem;}
+[data-testid="stSidebarCollapsedControl"] svg,[data-testid="stSidebarCollapseButton"] svg{
+  color:var(--coral-dark)!important;fill:var(--coral-dark)!important;}
 .block-container{padding-top:1.6rem;max-width:1320px;}
 
 /* Every surface below is a hardcoded light one, so state the ink colour
@@ -84,6 +102,13 @@ code,pre,.stCode,.stCode *{color:var(--ink)!important;}
 .chip{display:inline-block;background:rgba(217,119,87,.12);color:var(--coral-dark);
 border:1px solid rgba(217,119,87,.30);padding:3px 13px;border-radius:999px;
 font-size:.79rem;font-weight:600;letter-spacing:.02em;}
+
+/* Brand row in the main column, so the logo survives a collapsed sidebar. */
+.brand{display:flex;align-items:center;gap:9px;margin:0 0 10px 0;text-decoration:none;}
+.brand svg{height:26px;width:auto;display:block;}
+.brand .word{font-family:'Inter',sans-serif;font-weight:700;font-size:1.14rem;
+color:#05192D;letter-spacing:-.02em;}
+.brand:hover{opacity:.82;}
 
 [data-testid="stSidebar"]{background:var(--paper);border-right:1px solid var(--border);color:var(--ink);}
 [data-testid="stSidebar"] h3{font-size:1rem;margin:.1rem 0;}
@@ -138,7 +163,9 @@ a{color:var(--coral-dark);}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
-LOGO = str(Path(__file__).parent / "assets" / "datacamp-logo.png")
+ASSETS = Path(__file__).parent / "assets"
+LOGO = str(ASSETS / "datacamp-logo.png")
+MARK = str(ASSETS / "datacamp-mark.svg")
 
 for key, default in [("runs", []), ("spend", 0.0), ("bug_text", default_bug())]:
     st.session_state.setdefault(key, default)
@@ -185,8 +212,13 @@ with st.sidebar:
 # Header
 # ──────────────────────────────────────────────────────────────────────────────
 
+brand = ""
+if Path(MARK).exists():
+    brand = (f'<a class="brand" href="https://www.datacamp.com/blog" target="_blank" '
+             f'rel="noopener">{logo_mark(MARK)}<span class="word">datacamp</span></a>')
+
 st.markdown(
-    '<div class="hero"><span class="chip">🔧 Powered by Claude Opus 5</span>'
+    f'{brand}<div class="hero"><span class="chip">🔧 Powered by Claude Opus 5</span>'
     '<h1>Effort Dial</h1><p>Watch the agent reason, patch a real bug, and bill you for it.</p></div>',
     unsafe_allow_html=True,
 )
