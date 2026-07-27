@@ -46,11 +46,12 @@ def logo_uri(path: str) -> str:
 
 
 @st.cache_data
-def logo_mark(path: str) -> str:
-    """Inline the SVG mark so it inherits page styling and needs no extra request."""
+def svg_uri(path: str) -> str:
+    """Streamlit strips inline <svg> from markdown, so serve it as a data URI."""
     svg = Path(path).read_text(encoding="utf-8")
     svg = re.sub(r"<metadata>.*?</metadata>", "", svg, flags=re.S)
-    return re.sub(r"<\?xml.*?\?>", "", svg, flags=re.S).strip()
+    svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.S).strip()
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode()
 
 
 @st.cache_data
@@ -58,7 +59,12 @@ def default_bug() -> str:
     return (PROJECT_ROOT / "bug_report.md").read_text(encoding="utf-8").strip()
 
 
-st.set_page_config(page_title="Effort Dial - Claude Opus 5", page_icon="🔧", layout="wide")
+st.set_page_config(
+    page_title="Effort Dial - Claude Opus 5",
+    page_icon="🔧",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 CSS = """
 <style>
@@ -70,16 +76,14 @@ html,body,[class*="css"],.stMarkdown,p,li,label,span,div{font-family:'Inter',san
 .stMarkdown,p,li,label{color:var(--ink);}
 h1,h2,h3,h4{font-family:'Spectral',Georgia,serif;color:var(--ink);letter-spacing:-.015em;}
 
-/* Hide the chrome but never the sidebar control. Hiding the whole header
-   takes the expand arrow with it, and a collapsed sidebar then has no way back. */
-#MainMenu,footer,[data-testid="stToolbar"],[data-testid="stDecoration"]{visibility:hidden;}
-[data-testid="stHeader"]{background:transparent;height:0;}
-[data-testid="stSidebarCollapsedControl"],[data-testid="stSidebarCollapseButton"],
-[data-testid="collapsedControl"]{visibility:visible!important;display:flex!important;
-z-index:999;top:.55rem;}
-[data-testid="stSidebarCollapsedControl"] svg,[data-testid="stSidebarCollapseButton"] svg{
-  color:var(--coral-dark)!important;fill:var(--coral-dark)!important;}
-.block-container{padding-top:1.6rem;max-width:1320px;}
+/* Hide the menu and toolbar only. The header itself has to keep its box,
+   because Streamlit puts the sidebar expand control inside it: collapse the
+   header and a closed sidebar can never be reopened. */
+#MainMenu,footer,[data-testid="stAppToolbar"],[data-testid="stToolbar"]{visibility:hidden;}
+[data-testid="stHeader"]{background:transparent;}
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="stSidebarCollapseButton"] button{color:var(--coral-dark)!important;}
+.block-container{padding-top:1rem;max-width:1320px;}
 
 /* Every surface below is a hardcoded light one, so state the ink colour
    explicitly rather than inheriting whatever theme the browser asked for. */
@@ -104,11 +108,12 @@ border:1px solid rgba(217,119,87,.30);padding:3px 13px;border-radius:999px;
 font-size:.79rem;font-weight:600;letter-spacing:.02em;}
 
 /* Brand row in the main column, so the logo survives a collapsed sidebar. */
-.brand{display:flex;align-items:center;gap:9px;margin:0 0 10px 0;text-decoration:none;}
-.brand svg{height:26px;width:auto;display:block;}
-.brand .word{font-family:'Inter',sans-serif;font-weight:700;font-size:1.14rem;
-color:#05192D;letter-spacing:-.02em;}
-.brand:hover{opacity:.82;}
+.brand,.brand:hover,.brand:visited{display:inline-flex;align-items:center;gap:9px;
+margin:0 0 12px 0;text-decoration:none!important;border-bottom:none!important;}
+.brand img{height:28px;width:auto;display:block;}
+.brand .word{font-family:'Inter',sans-serif;font-weight:700;font-size:1.2rem;
+color:#05192D!important;letter-spacing:-.025em;text-decoration:none!important;}
+.brand:hover{opacity:.8;}
 
 [data-testid="stSidebar"]{background:var(--paper);border-right:1px solid var(--border);color:var(--ink);}
 [data-testid="stSidebar"] h3{font-size:1rem;margin:.1rem 0;}
@@ -215,7 +220,8 @@ with st.sidebar:
 brand = ""
 if Path(MARK).exists():
     brand = (f'<a class="brand" href="https://www.datacamp.com/blog" target="_blank" '
-             f'rel="noopener">{logo_mark(MARK)}<span class="word">datacamp</span></a>')
+             f'rel="noopener"><img src="{svg_uri(MARK)}" alt="DataCamp"/>'
+             f'<span class="word">datacamp</span></a>')
 
 st.markdown(
     f'{brand}<div class="hero"><span class="chip">🔧 Powered by Claude Opus 5</span>'
